@@ -100,4 +100,8 @@ contract ProportionalTest {
     function distributionAtIndex(bytes32 assetId, uint index) public view returns(uint denominator, uint _balance, uint _period) {
         return balance.distributionAtIndex(assetId, index);
     }
+
+    function getPointers(bytes32 assetId, address user) public view returns(uint pdi, uint pbi) {
+        return balance.getPointers(assetId, user);
+    }
 }

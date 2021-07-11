@@ -230,12 +230,12 @@ library Proportional {
     }
     
     function nudgeUserDistributionIndex(System storage self, bytes32 assetId, address user, uint distributionIndex) private {
-        if(distributionIndex < self.asset[self.shareAsset].distributions.length) self.asset[assetId].users[user].processingDistributionIndex = distributionIndex + 1;
+        if(distributionIndex < self.asset[assetId].distributions.length) self.asset[assetId].users[user].processingDistributionIndex = distributionIndex + 1;
     }
 
     function processNextUserDistribution(System storage self, bytes32 assetId, address user) internal returns(uint amount) {
         Asset storage a = self.asset[assetId];
-        Asset storage s = self.asset[self.shareAsset];
+        Asset storage s = self.asset[self.shareAsset]; //always hodlc
         User storage ua = a.users[user];
         User storage us = s.users[user];
         
@@ -259,7 +259,7 @@ library Proportional {
         Distribution storage d = a.distributions[distributionIndex];
 
         // transfer the amount from the distribution to the user
-        emit DistributionPaid(msg.sender, assetId, d.period, amount, balanceIndex, distributionIndex);
+        emit DistributionPaid(user, assetId, d.period, amount, balanceIndex, distributionIndex);
         add(self, assetId, user, amount, 0);
         
         /****************************************************************
@@ -286,7 +286,7 @@ library Proportional {
 
         while(nextUserBalancePeriod <= nextDistributionPeriod) {
             nudgeUserBalanceIndex(self, assetId, user, balanceIndex);
-            (amount, balanceIndex, distributionIndex, closed) = nextUserDistributionDetails(self, assetId, user);
+            (/* amount */, balanceIndex, /* distributionIndex */, /* closed */) = nextUserDistributionDetails(self, assetId, user);
             nextUserBalancePeriod = peakNextUserBalancePeriod(us, balanceIndex);
         }
     }
@@ -316,16 +316,17 @@ library Proportional {
         
         Asset storage a = self.asset[assetId];
         Asset storage s = self.asset[self.shareAsset];
+        User storage ua = a.users[user];
         User storage us = s.users[user]; 
         
         // shareAsset balance index, this asset distribution index
-        balanceIndex = us.processingBalanceIndex;
-        distributionIndex = us.processingDistributionIndex;
+        balanceIndex = ua.processingBalanceIndex;
+        distributionIndex = ua.processingDistributionIndex;
 
         // if the user distribution index points to an as-yet uninitialized period (future) then it is not payable
         if(a.distributions.length < distributionIndex + 1) return(0, balanceIndex, distributionIndex, false);
         
-        // the distribution to work with (this asset) from the user's distribution index
+        // the distribution to work with (this asset) from the user's asset distribution index
         Distribution storage d = a.distributions[distributionIndex];
         // the demoninator for every asset snapshots the share asset supply when the distribution is closed
         uint supply = d.denominator;
@@ -407,6 +408,12 @@ library Proportional {
         balance = ub.balance;
         _period = ub.period;
         controlled = ub.controlled;
+    }
+
+    function getPointers(System storage self, bytes32 assetId, address user) internal view returns(uint pdi, uint pbi) {
+        Asset storage a = self.asset[assetId];
+        a.users[user].processingDistributionIndex;
+        return (a.users[user].processingDistributionIndex, a.users[user].processingBalanceIndex);
     }
     
     /*******************************************************************

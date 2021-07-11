@@ -16,6 +16,7 @@ contract HOracle is IHOracle {
     uint constant PRECISION = 10 ** 18;
     uint constant UNISWAP_SHIFT = 10 ** 12;
     
+    //switch to chainlink
     function read() public view override returns(uint ethUsd18) {
         (uint112 uniswapReserve0, uint112 uniswapReserve1, /*uint32 timeStamp*/) = uniswap.getReserves();
         ethUsd18 = (uint(uniswapReserve0) * PRECISION * UNISWAP_SHIFT) / (uniswapReserve1);

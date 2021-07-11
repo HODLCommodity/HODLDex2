@@ -19,6 +19,8 @@
  */
 
 const HDWalletProvider = require('@truffle/hdwallet-provider');
+const { provider } = require('./simcity/neighborhood')
+
 // const infuraKey = "fj4jll3k.....";
 //
 const fs = require('fs');
@@ -43,11 +45,12 @@ module.exports = {
     // options below to some value.
     //
     development: {
+      provider: () => provider,
       host: "127.0.0.1",     // Localhost (default: none)
       port: 8545,            // Standard Ethereum port (default: none)
       network_id: "*",       // Any network (default: none)
       gas: 6000000
-     },
+    },
 
     // Another network with more advanced options...
     //advanced: {
